@@ -1,0 +1,81 @@
+library(nlme)
+library(nlmeU) ##bases de dados exemplo
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(JWileymisc)
+
+data("armd")
+str(armd)
+
+ggplot(data = armd, aes(x = time, y = visual, color = treat.f))+
+  geom_point()+
+  geom_jitter(width = 0.6, height = 0.6)+
+  geom_smooth()
+
+lm.form <- formula(visual ~ -1 + visual0 + time.f + treat.f:time.f)
+
+##gls ##
+##methods = LM ou REML
+model_gls <- gls(lm.form, data = armd, method ='ML')
+summary(model_gls)
+##Alternativamento pode-se escrever a formula
+model_gls <- gls(visual ~ -1 + visual0 + time.f + treat.f:time.f, data = armd,
+                 method = 'ML')
+summary(model_gls)
+plot(model_gls)
+
+##Acrescentando Covariavancia
+model_gls2 <- gls(visual ~ -1 + visual0 + time.f + treat.f:time.f, data = armd,
+                 weights = varIdent(form = ~ 1 | time.f))
+summary(model_gls2)
+
+##Outra Covariancia
+model_gls3 <- gls(visual ~ -1 + visual0 + time.f + treat.f:time.f, data = armd,
+                  weights = varPower(form = ~ time | treat.f))
+summary(model_gls3)
+
+##Acrescentando a estrutura da Covariancia
+model_gls3 <- gls(visual ~ -1 + visual0 + time.f + treat.f:time.f, data = armd,
+                  weights = varPower(form = ~ time.f),
+                  correlation = corCompSymm(form = ~ 1 | subject))
+summary(model_gls3)
+
+##Modelo com lmer
+model_lme <- lmer(visual ~ visual0 +  treat.f + (1 | subject) + (1 | time:treat.f ),
+                  data = armd)
+summary(model_lme)
+
+
+model_lme2 <- lmer(visual ~ visual0 + treat.f + (time || subject), data = armd)
+summary(model_lme2)
+
+### Exemplo Novo ############################
+library(haven)
+library(vtree)
+imm10 <- read_dta('imm10.dta')
+str(imm10)
+head(imm10)
+
+vtree(imm10, 'schid homework', summary="math \nmean math %mean%")
+dim(imm10)
+
+model_00 <- lmer(math ~ 1 + (1 | stuid), data = imm10)
+summary(model_00)
+model_01 <- lmer(math ~ homework + (1 | stuid), data = imm10)
+summary(model_01)
+ 
+##  Daily Dataset ####
+data("aces_daily")
+dim(aces_daily)
+str(aces_daily)
+summary(aces_daily)
+
+aces_daily$SurveyInteger <- factor(aces_daily$SurveyInteger, 
+                                   labels = c('morning','afternoon','evening'))
+aces_daily$Female <- factor(aces_daily$Female)
+aces_daily$BornAUS <- factor(aces_daily$BornAUS)
+aces_daily$EDU <- factor(aces_daily$EDU, labels = c('other','university'))
+
+ggplot(data = aces_daily, aes(x = SurveyInteger, y = NegAff, fill = Female))+
+  geom_boxplot()
