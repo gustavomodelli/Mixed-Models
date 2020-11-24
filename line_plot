@@ -1,0 +1,12 @@
+library(tidyverse)
+
+
+carla <- data.frame(
+  grupo = c(rep('A', 18), rep("B", 18)),
+  creat = c(rnorm(18, 1.5, 0.25), rnorm(18, 1.2, 0.32)),
+  id = c(1:18, 1:18)
+)
+
+ggplot(carla, aes(grupo, creat, col = as.factor(id), group = as.factor(id)))+
+  geom_point()+
+  geom_line()
